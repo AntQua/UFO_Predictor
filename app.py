@@ -14,7 +14,7 @@ nearest_sightings = all_models['nearest_sightings']
 
 # Function to run the app
 def run():
-    st.markdown("<h1 style='text-align: center;'>🛸 UFO Sighting Predictor 👽</h1>", unsafe_allow_html=True)
+    st.title("UFO Sighting Predictor")
 
     # Input the date for prediction
     date_input = st.date_input("Choose a date for prediction:", value=datetime.now())
