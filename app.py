@@ -8,14 +8,13 @@ import pydeck as pdk
 all_models = joblib.load('ufo_model.pkl')
 lat_pipeline = all_models['lat_pipeline']
 long_pipeline = all_models['long_pipeline']
-kmeans = all_models['kmeans']
+kmeans_pipeline = all_models['kmeans_pipeline']
 cluster_info = all_models['cluster_info']
 nearest_sightings = all_models['nearest_sightings']
 
 # Function to run the app
 def run():
-
-    st.markdown("<h1 style='text-align: center;'>🛸 UFO Sighting Predictor 👽</h1>", unsafe_allow_html=True)
+    st.title("UFO Sighting Predictor")
 
     # Input the date for prediction
     date_input = st.date_input("Choose a date for prediction:", value=datetime.now())
@@ -32,7 +31,6 @@ def run():
             'minute': [future_date.minute]
         })
 
-        # Scale the features
         predicted_lat = lat_pipeline.predict(future_features)[0]
         predicted_long = long_pipeline.predict(future_features)[0]
 
@@ -51,15 +49,22 @@ def run():
             data=pd.DataFrame({'lat': [predicted_lat], 'lon': [predicted_long]}),
             get_position='[lon, lat]',
             get_color='[200, 30, 0, 160]',
-            get_radius=50000,  # Increased radius for larger dot size
+            get_radius=50000
         )
 
         r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "Predicted Location: {lat}, {lon}"})
         st.pydeck_chart(r)
 
-        # Predict the shape and duration in that location
-        predicted_point = pd.DataFrame({'latitude': [predicted_lat], 'longitude': [predicted_long]})
-        predicted_cluster = kmeans.predict(predicted_point)[0]
+        # Prepare the input for the KMeans model
+        kmeans_input = pd.DataFrame({
+            'latitude': [predicted_lat],
+            'longitude': [predicted_long]
+        })
+
+        # Transform the input using the KMeans preprocessing pipeline
+        preprocessed_input = kmeans_pipeline.named_steps['preprocessor'].transform(kmeans_input)
+        predicted_cluster = kmeans_pipeline.named_steps['kmeans'].predict(preprocessed_input)[0]
+
         most_common_shape = cluster_info[predicted_cluster]['most_common_shape']
         average_duration = cluster_info[predicted_cluster]['average_duration']
 
@@ -74,4 +79,3 @@ def run():
 # Run the Streamlit app
 if __name__ == '__main__':
     run()
-
