@@ -51,13 +51,13 @@ X_train, X_test, y_lat_train, y_lat_test, y_long_train, y_long_test = train_test
 lat_pipeline = Pipeline([
     ('imputer', SimpleImputer(strategy='median')),
     ('scaler', StandardScaler()),
-    ('regressor', RandomForestRegressor(random_state=42))
+    ('regressor', RandomForestRegressor(n_estimators=11, random_state=42))
 ])
 
 long_pipeline = Pipeline([
     ('imputer', SimpleImputer(strategy='median')),
     ('scaler', StandardScaler()),
-    ('regressor', RandomForestRegressor(random_state=42))
+    ('regressor', RandomForestRegressor(n_estimators=11, random_state=42))
 ])
 
 lat_pipeline.fit(X_train, y_lat_train)
