@@ -5,3 +5,4 @@ pydeck
 scikit-learn
 xgboost
 joblib
+geopy
