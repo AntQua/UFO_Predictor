@@ -3,9 +3,9 @@ import json
 from PIL import Image
 from io import BytesIO
 import streamlit as st
-from dotenv import load_dotenv
-# Load environment variables from the .env file
-load_dotenv()
+# from dotenv import load_dotenv
+# # Load environment variables from the .env file
+# load_dotenv()
 # Retrieve the API key from the environment variable
 API_KEY = st.secrets['OPENAI_API_KEY']
 
