@@ -6,4 +6,3 @@ scikit-learn
 xgboost
 joblib
 geopy
-geodesic
