@@ -35,7 +35,7 @@ def get_image_from_url(image_url):
     return img
 
 def display_ufo_image(predicted_shape):
-    description = f"A {predicted_shape} shaped UFO over the mountains"
+    description = f"A {predicted_shape} shaped UFO over the sandy dune mountains during daytime"
     image_url = generate_ufo_image(description)
     if image_url:
         img = get_image_from_url(image_url)
