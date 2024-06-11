@@ -5,15 +5,17 @@ from io import BytesIO
 import streamlit as st
 import random
 
+# comment this if in production
 from dotenv import load_dotenv
 import os
 
-# # Load environment variables from the .env file
+# comment this if in production
 load_dotenv()
 
-# Retrieve the API key from the environment variable
+# comment this if in production
 API_KEY = os.getenv('OPENAI_API_KEY')
 
+# uncomment this if in production
 #API_KEY = st.secrets['OPENAI_API_KEY']
 
 # Define a dictionary with placeholders and corresponding descriptions
