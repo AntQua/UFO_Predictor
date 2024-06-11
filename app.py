@@ -8,8 +8,7 @@ import ufo_img_generator as image_generator  # Import the image generator module
 
 # Load the models
 all_models = joblib.load('ufo_model.pkl')
-lat_pipeline = all_models['lat_pipeline']
-long_pipeline = all_models['long_pipeline']
+location_pipeline = all_models['location_pipeline']  # Use the combined pipeline
 kmeans_pipeline = all_models['kmeans_pipeline']
 shape_duration_models = all_models['shape_duration_models']
 nearest_sightings = all_models['nearest_sightings']
@@ -60,8 +59,11 @@ def run():
             'hour': [future_date.hour],
             'minute': [future_date.minute]
         })
-        predicted_lat = lat_pipeline.predict(future_features)[0]
-        predicted_long = long_pipeline.predict(future_features)[0]
+
+        # Predict both latitude and longitude with the combined model
+        predicted_location = location_pipeline.predict(future_features)
+        predicted_lat = predicted_location[0][0]
+        predicted_long = predicted_location[0][1]
         st.write(f"Predicted Location: Latitude {predicted_lat}, Longitude {predicted_long}")
 
         # Display the predicted location on a map centered on the USA
@@ -106,15 +108,15 @@ def run():
             predicted_duration = duration_model.predict(kmeans_input)[0]
 
         # Use the new image_generator module to display the image
-        image_generator.display_ufo_image(predicted_shape)
-        st.write(f"Predicted Duration of UFO Sighting: {predicted_duration:.2f} seconds")
+        #image_generator.display_ufo_image(predicted_shape)
+        #st.write(f"Predicted Duration of UFO Sighting: {predicted_duration:.2f} seconds")
 
         # Get the nearest sightings in the cluster
         cluster_sightings = nearest_sightings[predicted_cluster]
         nearest_sightings_df = get_nearest_sightings(predicted_lat, predicted_long, cluster_sightings)
         st.write("Nearest Sightings in the Cluster:")
         st.table(nearest_sightings_df)
-        
+
 # Run the Streamlit app
 if __name__ == '__main__':
     run()
