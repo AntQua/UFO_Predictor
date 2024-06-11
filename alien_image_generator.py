@@ -45,14 +45,14 @@ def generate_alien_image(description):
         "size": "1024x1024"
     }
 
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-
-    if response.status_code == 200:
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()  # Raises an HTTPError for bad responses
         response_data = response.json()
         image_url = response_data['data'][0]['url']
         return image_url
-    else:
-        st.error(f"Error: {response.status_code} - {response.text}")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Failed to generate image: {e}")
         return None
 
 def get_image_from_url(image_url):
