@@ -4,11 +4,17 @@ from PIL import Image
 from io import BytesIO
 import streamlit as st
 import random
-# from dotenv import load_dotenv
+
+from dotenv import load_dotenv
+import os
+
 # # Load environment variables from the .env file
-# load_dotenv()
+load_dotenv()
+
 # Retrieve the API key from the environment variable
-API_KEY = st.secrets['OPENAI_API_KEY']
+API_KEY = os.getenv('OPENAI_API_KEY')
+
+#API_KEY = st.secrets['OPENAI_API_KEY']
 
 # Define a dictionary with placeholders and corresponding descriptions
 prompt_options = {
