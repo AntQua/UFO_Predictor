@@ -4,6 +4,7 @@ import joblib
 from datetime import datetime
 import pydeck as pdk
 from geopy.distance import geodesic
+from geopy.geocoders import Nominatim
 import ufo_img_generator
 import alien_image_generator
 from utils import add_image_styles
@@ -24,20 +25,16 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         st.error(f"Error calculating distance: {e}")
         return None
 
-
-# Function to get the nearest sightings in the cluster
-def get_nearest_sightings(pred_lat, pred_lon, sightings_df, top_n=5):
+def get_location_name(lat, lon):
     try:
-        sightings_df['distance'] = sightings_df.apply(
-            lambda row: calculate_distance(pred_lat, pred_lon, row['latitude'], row['longitude']), axis=1
-        )
-        nearest = sightings_df.nsmallest(top_n, 'distance')
-        nearest['duration (seconds)'] = nearest['duration (seconds)'].apply(lambda x: f'{x:g}')
-        nearest['distance (km)'] = nearest['distance'].apply(lambda x: f'{x:.2f}')
-        return nearest[['shape', 'duration (seconds)', 'distance (km)']]
+        geolocator = Nominatim(user_agent="ufo_app")
+        location = geolocator.reverse((lat, lon), exactly_one=True)
+        if location:
+            return location.address
+        else:
+            return "Location not found"
     except Exception as e:
-        st.error(f"Error fetching nearest sightings: {e}")
-        return pd.DataFrame()  # Return an empty DataFrame in case of error
+        return f"Error: {e}"
 
 
 # Function to add a background image
@@ -89,7 +86,13 @@ def process_prediction(date_input, time_input):
     predicted_location = location_pipeline.predict(future_features)
     predicted_lat = predicted_location[0][0]
     predicted_long = predicted_location[0][1]
-    st.write(f"Predicted Location: Latitude {predicted_lat}, Longitude {predicted_long}")
+
+    # Get location name
+    location_name = get_location_name(predicted_lat, predicted_long)
+
+    st.markdown("<h3 style='text-align: center;'>🎯 Predicted Location:</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='text-align: center;'>{location_name} </h4>", unsafe_allow_html=True)
+    st.markdown(f"<h6 style='text-align: center;'>Latitude: {predicted_lat:.2f}, Longitude: {predicted_long:.2f} </h6>", unsafe_allow_html=True)
 
     display_map(predicted_lat, predicted_long)
     predict_cluster_and_display_sightings(predicted_lat, predicted_long)
@@ -114,6 +117,37 @@ def display_map(pred_lat, pred_long):
         st.pydeck_chart(r)
     except Exception as e:
         st.error(f"Error displaying map: {e}")
+
+# Function to get the nearest sightings in the cluster
+def get_nearest_sightings(pred_lat, pred_lon, sightings_df, top_n=5):
+    try:
+        # Calculate distance for each sighting
+        sightings_df['distance'] = sightings_df.apply(
+            lambda row: calculate_distance(pred_lat, pred_lon, row['latitude'], row['longitude']), axis=1
+        )
+
+        # Select the top N nearest sightings
+        nearest = sightings_df.nsmallest(top_n, 'distance')
+
+        # Rename columns for clarity
+        nearest = nearest.rename(columns={'distance': 'distance (km)'})
+
+        # Apply formatting to the duration and distance columns
+        nearest['duration (seconds)'] = nearest['duration (seconds)'].apply(lambda x: f'{x:g}')
+        nearest['distance (km)'] = nearest['distance (km)'].apply(lambda x: f'{x:.2f}')
+
+        # Select the relevant columns and reset the index
+        nearest = nearest[['shape', 'duration (seconds)', 'distance (km)']].reset_index(drop=True)
+
+        # Add a new sequential index column starting from 1
+        nearest.index += 1
+        nearest.index.name = 'Index'
+
+        return nearest
+    except Exception as e:
+        st.error(f"Error fetching nearest sightings: {e}")
+        return pd.DataFrame()  # Return an empty DataFrame in case of error
+
 
 
 # Function to predict cluster and display sightings
@@ -141,6 +175,17 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
         predicted_duration = duration_model.predict(kmeans_input)[0]
 
     st.markdown(
+        f"""
+        <div style='text-align: center; font-size: 20px;'>
+             🕒 Predicted Duration of <span style='color: orange; font-weight: bold;'>UFO</span> Sighting:
+             <span style='color: orange; font-weight: bold;'>{predicted_duration:.2f}</span>
+             seconds
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
         """
         <style>
         table {
@@ -150,6 +195,7 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
             font-size: 20px;
             font-weight: bold;
             text-align: center !important;
+            color: white !important;
         }
         table td {
             text-align: center !important;
@@ -162,21 +208,12 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
 
     cluster_sightings = nearest_sightings[predicted_cluster]
     nearest_sightings_df = get_nearest_sightings(pred_lat, pred_long, cluster_sightings)
-    nearest_sightings_df = nearest_sightings_df.reset_index(drop=True)
 
     st.markdown("<h4 style='text-align: center;'>🛸 Previous sightings nearest to predicted location 🛸</h4>", unsafe_allow_html=True)
     st.table(nearest_sightings_df)
 
-    st.markdown(
-        f"""
-        <div style='text-align: center; font-size: 20px; font-weight: bold;'>
-            Predicted Duration of UFO Sighting: {predicted_duration:.2f} seconds
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-    ufo_img_generator.display_ufo_image(predicted_shape)
+    #ufo_img_generator.display_ufo_image(predicted_shape)
 
 # Alien sighting section
 def alien_sighting_section():
@@ -187,14 +224,18 @@ def alien_sighting_section():
         with col1:
             if st.button("Yes"):
                 st.session_state['show_alien_section'] = True
-                st.experimental_rerun()
+                st.rerun()
 
         with col2:
             if st.button("No"):
                 st.session_state.clear()
-                st.experimental_rerun()
+                st.rerun()
     else:
-        st.markdown("<h2 style='text-align: center;'>👽 Describe the alien you saw 👽</h2>", unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center;'>👽 Describe the <span style='color: green; font-weight: bold;'>ALIEN</span> you saw 👽</h2>",
+            unsafe_allow_html=True
+        )
+
         with st.form("alien_description_form"):
             alien_race = st.text_input("Enter the alien race:", "")
             alien_color = st.text_input("Enter the alien color:", "")
@@ -205,9 +246,9 @@ def alien_sighting_section():
 
         if submit_button:
             with st.spinner("Predicting... Please wait."):
-                alien_image_generator.display_alien_image(
-                    alien_race, alien_color, alien_size, alien_shape, additional_features
-                )
+                # alien_image_generator.display_alien_image(
+                #     alien_race, alien_color, alien_size, alien_shape, additional_features
+                # )
                 st.session_state['show_alien_section'] = False
 
 
@@ -223,7 +264,7 @@ def run():
     if 'show_alien_section' in st.session_state and st.session_state['show_alien_section']:
         alien_sighting_section()
     else:
-        st.markdown("<h1 style='text-align: center;'>🛸 UFO Sighting Predictor 🛸</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center;'>🛸 <span style='color: orange; font-weight: bold;'>UFO</span> Sighting Predictor 🛸</h1>", unsafe_allow_html=True)
         center_content()
 
         with st.form(key='date_time_form'):
@@ -244,7 +285,6 @@ def run():
 
         if submit_button:
             with st.spinner("Predicting... Please wait."):
-                # Process prediction (assuming this function exists and is properly defined)
                 process_prediction(date_input, time_input)
                 st.session_state['prediction_done'] = True
 
@@ -253,7 +293,7 @@ def run():
             formatted_time = time_input.strftime("%H:%M")
 
             st.markdown(
-                f"<h2 style='text-align: center;'>👽 Have you also seen an alien in {formatted_date} at {formatted_time}h? 👽</h2>",
+                f"<h4 style='text-align: center;'>👽 Have you also seen an <span style='color: green; font-weight: bold;'>ALIEN</span> in {formatted_date} at {formatted_time}h? 👽</h4>",
                 unsafe_allow_html=True
         )
 
