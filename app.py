@@ -213,7 +213,7 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
     st.table(nearest_sightings_df)
 
 
-    #ufo_img_generator.display_ufo_image(predicted_shape)
+    ufo_img_generator.display_ufo_image(predicted_shape)
 
 # Alien sighting section
 def alien_sighting_section():
@@ -246,9 +246,9 @@ def alien_sighting_section():
 
         if submit_button:
             with st.spinner("Predicting... Please wait."):
-                # alien_image_generator.display_alien_image(
-                #     alien_race, alien_color, alien_size, alien_shape, additional_features
-                # )
+                alien_image_generator.display_alien_image(
+                     alien_race, alien_color, alien_size, alien_shape, additional_features
+                )
                 st.session_state['show_alien_section'] = False
 
 
