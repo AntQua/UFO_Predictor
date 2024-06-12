@@ -5,6 +5,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBRegressor
 from sklearn.cluster import KMeans
@@ -99,8 +100,7 @@ df['log_duration'] = df['duration (seconds)'].apply(log_transform)
 # Extract features for training
 features = ['year', 'month', 'day', 'hour', 'minute']
 X = df[features]
-y_lat = df['latitude']
-y_long = df['longitude']
+y = df[['latitude', 'longitude']]
 
 # Preprocessing pipeline for latitude and longitude prediction
 numeric_features = ['year', 'month', 'day', 'hour', 'minute']
@@ -114,23 +114,18 @@ preprocessor = ColumnTransformer(
         ('num', numeric_transformer, numeric_features)
     ])
 
-lat_pipeline = Pipeline(steps=[
+location_pipeline = Pipeline(steps=[
     ('preprocessor', preprocessor),
-    ('regressor', XGBRegressor(n_estimators=50, random_state=42))
+    ('regressor', MultiOutputRegressor(XGBRegressor(n_estimators=50, random_state=42)))
 ])
 
-long_pipeline = Pipeline(steps=[
-    ('preprocessor', preprocessor),
-    ('regressor', XGBRegressor(n_estimators=50, random_state=42))
-])
-
-# Train latitude and longitude models
-lat_pipeline.fit(X, y_lat)
-long_pipeline.fit(X, y_long)
+# Train the model to predict both latitude and longitude
+location_pipeline.fit(X, y)
 
 # Predict latitude and longitude
-df['predicted_latitude'] = lat_pipeline.predict(X)
-df['predicted_longitude'] = long_pipeline.predict(X)
+predictions = location_pipeline.predict(X)
+df['predicted_latitude'] = predictions[:, 0]
+df['predicted_longitude'] = predictions[:, 1]
 
 # Preprocessing for KMeans clustering using predicted values
 kmeans_features = ['predicted_latitude', 'predicted_longitude']
@@ -209,8 +204,7 @@ for cluster_label in range(kmeans_pipeline.named_steps['kmeans'].n_clusters):
 
 # Save all models and data into a single pkl file
 all_models = {
-    'lat_pipeline': lat_pipeline,
-    'long_pipeline': long_pipeline,
+    'location_pipeline': location_pipeline,
     'kmeans_pipeline': kmeans_pipeline,
     'shape_duration_models': shape_duration_models,
     'nearest_sightings': nearest_sightings,
