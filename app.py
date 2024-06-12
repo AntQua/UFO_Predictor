@@ -6,6 +6,7 @@ import pydeck as pdk
 from geopy.distance import geodesic
 import ufo_img_generator
 import alien_image_generator
+from utils import add_image_styles
 
 # Load the models
 all_models = joblib.load('ufo_model.pkl')
@@ -17,18 +18,27 @@ label_encoder = all_models['label_encoder']
 
 # Function to calculate distance
 def calculate_distance(lat1, lon1, lat2, lon2):
-    return geodesic((lat1, lon1), (lat2, lon2)).km
+    try:
+        return geodesic((lat1, lon1), (lat2, lon2)).km
+    except Exception as e:
+        st.error(f"Error calculating distance: {e}")
+        return None
+
 
 # Function to get the nearest sightings in the cluster
 def get_nearest_sightings(pred_lat, pred_lon, sightings_df, top_n=5):
-    sightings_df['distance'] = sightings_df.apply(
-        lambda row: calculate_distance(pred_lat, pred_lon, row['latitude'], row['longitude']), axis=1
-    )
-    nearest = sightings_df.nsmallest(top_n, 'distance')
-    nearest['duration (seconds)'] = nearest['duration (seconds)'].apply(lambda x: f'{x:g}')
-    nearest['distance'] = nearest['distance'].apply(lambda x: f'{x:.2f}')
-    nearest = nearest.rename(columns={'distance': 'distance (km)'})
-    return nearest[['shape', 'duration (seconds)', 'distance (km)']]
+    try:
+        sightings_df['distance'] = sightings_df.apply(
+            lambda row: calculate_distance(pred_lat, pred_lon, row['latitude'], row['longitude']), axis=1
+        )
+        nearest = sightings_df.nsmallest(top_n, 'distance')
+        nearest['duration (seconds)'] = nearest['duration (seconds)'].apply(lambda x: f'{x:g}')
+        nearest['distance (km)'] = nearest['distance'].apply(lambda x: f'{x:.2f}')
+        return nearest[['shape', 'duration (seconds)', 'distance (km)']]
+    except Exception as e:
+        st.error(f"Error fetching nearest sightings: {e}")
+        return pd.DataFrame()  # Return an empty DataFrame in case of error
+
 
 # Function to add a background image
 def add_background_image(image_url):
@@ -86,21 +96,25 @@ def process_prediction(date_input, time_input):
 
 # Function to display map
 def display_map(pred_lat, pred_long):
-    view_state = pdk.ViewState(
-        latitude=37.0902,
-        longitude=-95.7129,
-        zoom=3,
-        pitch=0
-    )
-    layer = pdk.Layer(
-        'ScatterplotLayer',
-        data=pd.DataFrame({'lat': [pred_lat], 'lon': [pred_long]}),
-        get_position='[lon, lat]',
-        get_fill_color='[200, 30, 0, 160]',
-        get_radius=50000
-    )
-    r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "Predicted Location: {lat}, {lon}"})
-    st.pydeck_chart(r)
+    try:
+        view_state = pdk.ViewState(
+            latitude=37.0902,
+            longitude=-95.7129,
+            zoom=3,
+            pitch=0
+        )
+        layer = pdk.Layer(
+            'ScatterplotLayer',
+            data=pd.DataFrame({'lat': [pred_lat], 'lon': [pred_long]}),
+            get_position='[lon, lat]',
+            get_fill_color='[200, 30, 0, 160]',
+            get_radius=50000
+        )
+        r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "Predicted Location: {lat}, {lon}"})
+        st.pydeck_chart(r)
+    except Exception as e:
+        st.error(f"Error displaying map: {e}")
+
 
 # Function to predict cluster and display sightings
 def predict_cluster_and_display_sightings(pred_lat, pred_long):
@@ -162,79 +176,89 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
         unsafe_allow_html=True
     )
 
-    # ufo_img_generator.display_ufo_image(predicted_shape)
+    ufo_img_generator.display_ufo_image(predicted_shape)
 
 # Alien sighting section
 def alien_sighting_section():
-    st.markdown("<h2 style='text-align: center;'>👽 Have you seen an alien? 👽</h2>", unsafe_allow_html=True)
+    if not st.session_state.get('show_alien_section', False):
+        #st.markdown("<h2 style='text-align: center;'>👽 Have you seen an alien? 👽</h2>", unsafe_allow_html=True)
+        col1, col2 = st.columns([1, 1])
 
-    st.markdown("<div class='st-emotion-cache-ocqkz7'>", unsafe_allow_html=True)
-    col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("Yes"):
+                st.session_state['show_alien_section'] = True
+                st.experimental_rerun()
 
-    with col1:
-        yes_button = st.button("Yes", key="yes_button")
-    with col2:
-        no_button = st.button("No", key="no_button")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    if yes_button:
-        st.session_state['show_alien_form'] = True
-
-    if 'show_alien_form' in st.session_state and st.session_state['show_alien_form']:
+        with col2:
+            if st.button("No"):
+                st.session_state.clear()
+                st.experimental_rerun()
+    else:
+        st.markdown("<h2 style='text-align: center;'>👽 Describe the alien you saw 👽</h2>", unsafe_allow_html=True)
         with st.form("alien_description_form"):
-            st.markdown("### Describe the alien you saw:")
             alien_race = st.text_input("Enter the alien race:", "")
             alien_color = st.text_input("Enter the alien color:", "")
             alien_size = st.text_input("Enter the alien size:", "")
             alien_shape = st.text_input("Enter the alien shape:", "")
             additional_features = st.text_area("Additional Features", "")
-
-            # Centered and styled button for form submit
-            st.markdown("<div class='button-container'>", unsafe_allow_html=True)
             submit_button = st.form_submit_button("Generate Alien Image")
-            st.markdown("</div>", unsafe_allow_html=True)
 
         if submit_button:
-            # alien_image_generator.display_alien_image(
-            #     alien_race, alien_color, alien_size, alien_shape, additional_features
-            # )
-            st.session_state['show_alien_form'] = False
+            with st.spinner("Predicting... Please wait."):
+                alien_image_generator.display_alien_image(
+                    alien_race, alien_color, alien_size, alien_shape, additional_features
+                )
+                st.session_state['show_alien_section'] = False
 
-    if no_button:
-        st.session_state.clear()
-        st.rerun()
+
 
 # Main function to run the app
 def run():
+    # Call add_image_styles to apply custom styles
+    add_image_styles()
+
     image_url = "https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg"
     add_background_image(image_url)
 
-    st.markdown("<h1 style='text-align: center;'>🛸 UFO Sighting Predictor 🛸</h1>", unsafe_allow_html=True)
-    center_content()
-
-    with st.form(key='date_time_form'):
-        cols = st.columns([2, 2])
-        with cols[0]:
-            date_input = st.date_input("Choose a date for prediction:", value=datetime.now())
-        with cols[1]:
-            if 'time_input' not in st.session_state:
-                st.session_state['time_input'] = datetime.now().time()
-            time_input = st.time_input("Choose a time for prediction:", value=st.session_state['time_input'])
-            if st.session_state['time_input'] != time_input:
-                st.session_state['time_input'] = time_input
-
-        # Centered and styled button for form submit
-        st.markdown("<div class='button-container'>", unsafe_allow_html=True)
-        submit_button = st.form_submit_button("Predict Location")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    if submit_button:
-        process_prediction(date_input, time_input)
-        st.session_state['prediction_done'] = True
-
-    if 'prediction_done' in st.session_state and st.session_state['prediction_done']:
+    if 'show_alien_section' in st.session_state and st.session_state['show_alien_section']:
         alien_sighting_section()
+    else:
+        st.markdown("<h1 style='text-align: center;'>🛸 UFO Sighting Predictor 🛸</h1>", unsafe_allow_html=True)
+        center_content()
+
+        with st.form(key='date_time_form'):
+            cols = st.columns([2, 2])
+            with cols[0]:
+                date_input = st.date_input("Choose a date for prediction:", value=datetime.now())
+            with cols[1]:
+                if 'time_input' not in st.session_state:
+                    st.session_state['time_input'] = datetime.now().time()
+                time_input = st.time_input("Choose a time for prediction:", value=st.session_state['time_input'])
+                if st.session_state['time_input'] != time_input:
+                    st.session_state['time_input'] = time_input
+
+            # Centered and styled button for form submit
+            st.markdown("<div class='button-container'>", unsafe_allow_html=True)
+            submit_button = st.form_submit_button("Predict Location")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        if submit_button:
+            with st.spinner("Predicting... Please wait."):
+                # Process prediction (assuming this function exists and is properly defined)
+                process_prediction(date_input, time_input)
+                st.session_state['prediction_done'] = True
+
+            # Format date and time for the output text
+            formatted_date = date_input.strftime("%d/%m/%Y")
+            formatted_time = time_input.strftime("%H:%M")
+
+            st.markdown(
+                f"<h2 style='text-align: center;'>👽 Have you also seen an alien in {formatted_date} at {formatted_time}h? 👽</h2>",
+                unsafe_allow_html=True
+        )
+
+        if 'prediction_done' in st.session_state and st.session_state['prediction_done']:
+            alien_sighting_section()
 
 # CSS for custom button styling
 st.markdown(

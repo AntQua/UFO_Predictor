@@ -1,20 +1,24 @@
-# alien_image_generator.py
-
 import requests
 import json
 from PIL import Image
 from io import BytesIO
 import streamlit as st
 import random
+from utils import add_image_styles
 
+# comment this if in production
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from the .env file
+# comment this if in production
 load_dotenv()
 
-# Retrieve the API key from the environment variable
+# comment this if in production
 API_KEY = os.getenv('OPENAI_API_KEY')
+
+# uncomment this if in production
+#API_KEY = st.secrets['OPENAI_API_KEY']
+
 
 def generate_alien_description(race, color, size, shape, features):
     if features:
@@ -61,9 +65,13 @@ def get_image_from_url(image_url):
     return img
 
 def display_alien_image(race, color, size, shape, features):
+    # Apply the custom styles
+    add_image_styles()
+
     description = generate_alien_description(race, color, size, shape, features)
     st.write(f"Image Description: {description}")  # Print the description above the image
     image_url = generate_alien_image(description)
     if image_url:
-        img = get_image_from_url(image_url)
-        st.image(img, caption=f"Alien Description: {description}", use_column_width=True)
+        st.markdown(f"""
+            <img src="{image_url}" alt="Alien" class="custom-image"/>
+            """, unsafe_allow_html=True)

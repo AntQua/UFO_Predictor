@@ -4,6 +4,7 @@ from PIL import Image
 from io import BytesIO
 import streamlit as st
 import random
+from utils import add_image_styles
 
 # comment this if in production
 from dotenv import load_dotenv
@@ -89,9 +90,13 @@ def get_image_from_url(image_url):
     return img
 
 def display_ufo_image(predicted_shape):
+    # Apply the custom styles
+    add_image_styles()
+
     description = generate_dynamic_prompt(predicted_shape)
     st.write(f"Image Description: {description}")  # Print the description above the image
     image_url = generate_ufo_image(description)
     if image_url:
-        img = get_image_from_url(image_url)
-        st.image(img, caption=f"Predicted UFO Shape: {predicted_shape}", use_column_width=True)
+        st.markdown(f"""
+            <img src="{image_url}" alt="UFO" class="custom-image"/>
+            """, unsafe_allow_html=True)
