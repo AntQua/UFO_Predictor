@@ -237,17 +237,17 @@ def alien_sighting_section():
         )
 
         with st.form("alien_description_form"):
-            alien_race = st.text_input("Enter the alien race:", "")
+            alien_texture = st.text_input("Enter the alien texture:", "")
             alien_color = st.text_input("Enter the alien color:", "")
-            alien_size = st.text_input("Enter the alien size:", "")
-            alien_shape = st.text_input("Enter the alien shape:", "")
+            alien_eyes = st.text_input("Enter the alien eyes:", "")
+            alien_limbs = st.text_input("Enter the alien limbs:", "")
             additional_features = st.text_area("Additional Features", "")
             submit_button = st.form_submit_button("Generate Alien Image")
 
         if submit_button:
             with st.spinner("Predicting... Please wait."):
                 alien_image_generator.display_alien_image(
-                     alien_race, alien_color, alien_size, alien_shape, additional_features
+                     alien_texture, alien_color, alien_eyes, alien_limbs, additional_features
                 )
                 st.session_state['show_alien_section'] = False
 

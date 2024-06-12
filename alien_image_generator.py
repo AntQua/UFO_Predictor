@@ -20,21 +20,22 @@ from utils import add_image_styles
 API_KEY = st.secrets['OPENAI_API_KEY']
 
 
-def generate_alien_description(race, color, size, shape, features):
+def generate_alien_description(texture, color, eyes, limbs, features):
     if features:
         descriptions = [
-            f"A {race} alien with {color} skin, {size} size, {shape} shape. Additional features: {features}.",
-            f"A {race} alien that is {color} in color, {size} in size, and has a {shape} shape. Additional features: {features}.",
-            f"An alien of the {race} race, {color} in color, {size} size, {shape} shaped. Additional features: {features}.",
+            f"An alien with {color} {texture} skin, {eyes} eyes, and {limbs}. Additional features: {features}.",
+            f"An alien that is {color} in color, with {texture} skin, {eyes} eyes, and {limbs}. Additional features: {features}.",
+            f"An alien with {texture} skin, {color} in color, {eyes} eyes, and {limbs}. Additional features: {features}.",
         ]
     else:
         descriptions = [
-            f"A {race} alien with {color} skin, {size} size, {shape} shape.",
-            f"A {race} alien that is {color} in color, {size} in size, and has a {shape} shape.",
-            f"An alien of the {race} race, {color} in color, {size} size, {shape} shaped.",
+            f"An alien with {color} {texture} skin, {eyes} eyes, and {limbs}.",
+            f"An alien that is {color} in color, with {texture} skin, {eyes} eyes, and {limbs}.",
+            f"An alien with {texture} skin, {color} in color, {eyes} eyes, and {limbs}.",
         ]
 
     return random.choice(descriptions)
+
 
 def generate_alien_image(description):
     url = "https://api.openai.com/v1/images/generations"
