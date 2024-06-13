@@ -36,7 +36,6 @@ def get_location_name(lat, lon):
     except Exception as e:
         return f"Error: {e}"
 
-
 # Function to add a background image
 def add_background_image(image_url):
     st.markdown(
@@ -148,8 +147,6 @@ def get_nearest_sightings(pred_lat, pred_lon, sightings_df, top_n=5):
         st.error(f"Error fetching nearest sightings: {e}")
         return pd.DataFrame()  # Return an empty DataFrame in case of error
 
-
-
 # Function to predict cluster and display sightings
 def predict_cluster_and_display_sightings(pred_lat, pred_long):
     kmeans_input = pd.DataFrame({
@@ -212,7 +209,6 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
     st.markdown("<h4 style='text-align: center;'>🛸 Previous sightings nearest to predicted location 🛸</h4>", unsafe_allow_html=True)
     st.table(nearest_sightings_df)
 
-
     ufo_img_generator.display_ufo_image(predicted_shape)
 
 # Alien sighting section
@@ -247,7 +243,10 @@ def alien_sighting_section():
             with col2:
                 number_of_eyes = st.selectbox("Number of eyes:", ["1", "2", "3", "4", "More"])
                 number_of_limbs = st.selectbox("Number of limbs:", ["2", "4", "6", "More"])
-                additional_features = st.text_area("Additional features (e.g., wings, antennae, etc.)")
+                additional_features = st.selectbox(
+                    "Select additional features:",
+                    ["None", "Wings", "Antennae", "Tentacles", "Fins", "Horns", "Glowing Eyes", "Multiple Mouths", "Scales", "Feathers"]
+                )
 
             submit_button = st.form_submit_button("Generate Alien Image")
 
@@ -258,8 +257,13 @@ def alien_sighting_section():
                     number_of_eyes, number_of_limbs, additional_features
                 )
                 st.session_state['show_alien_section'] = False
+                st.session_state['alien_image_generated'] = True
 
-
+    if st.session_state.get('alien_image_generated'):
+        st.markdown("<h3 style='text-align: center;'>🛸 Do you want to find another <span style='color: orange; font-weight: bold;'>UFO</span>? 🛸</h3>", unsafe_allow_html=True)
+        if st.button("Go back to date and time selection"):
+            st.session_state.clear()
+            st.experimental_rerun()
 
 # Main function to run the app
 def run():
@@ -303,7 +307,7 @@ def run():
             st.markdown(
                 f"<h4 style='text-align: center;'>👽 Have you also seen an <span style='color: #A1DD70; font-weight: bold;'>ALIEN</span> in {formatted_date} at {formatted_time}h? 👽</h4>",
                 unsafe_allow_html=True
-        )
+            )
 
         if 'prediction_done' in st.session_state and st.session_state['prediction_done']:
             alien_sighting_section()

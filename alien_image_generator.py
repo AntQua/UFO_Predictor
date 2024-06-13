@@ -6,13 +6,23 @@ import streamlit as st
 import random
 from utils import add_image_styles
 
+# comment this if in production
+# from dotenv import load_dotenv
+# import os
+
+# comment this if in production
+# load_dotenv()
+
+# comment this if in production
+# API_KEY = os.getenv('OPENAI_API_KEY')
+
 # uncomment this if in production
 API_KEY = st.secrets['OPENAI_API_KEY']
 
 def generate_alien_description(race, color, size, shape, eyes, limbs, features):
     size_str = f"{size:.1f} feet"
     description = f"A {race} alien with {color} skin, {size_str} tall, {shape} shaped, with {eyes} eyes and {limbs} limbs."
-    if features:
+    if features and features != "None":
         description += f" Additional features: {features}."
     return description
 
