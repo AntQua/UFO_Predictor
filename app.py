@@ -8,7 +8,6 @@ from geopy.geocoders import Nominatim
 import ufo_img_generator
 import alien_image_generator
 from utils import add_image_styles
-import json
 
 # Load the models
 all_models = joblib.load('ufo_model.pkl')
