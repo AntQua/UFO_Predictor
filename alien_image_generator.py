@@ -59,7 +59,7 @@ def display_alien_image(race, color, size, shape, eyes, limbs, features):
     add_image_styles()
 
     description = generate_alien_description(race, color, size, shape, eyes, limbs, features)
-    st.markdown("<h4 style='text-align: center;'>👇 Is this the ALIEN you saw? 👇</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center;'>👇 Is this the <span style='color: #A1DD70; font-weight: bold;'>ALIEN</span> you saw? 👇</h4>", unsafe_allow_html=True)
     image_url = generate_alien_image(description)
     if image_url:
         st.markdown(f"""
