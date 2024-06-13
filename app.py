@@ -8,6 +8,7 @@ from geopy.geocoders import Nominatim
 import ufo_img_generator
 import alien_image_generator
 from utils import add_image_styles
+import json
 
 # Load the models
 all_models = joblib.load('ufo_model.pkl')
@@ -109,7 +110,7 @@ def display_map(pred_lat, pred_long):
             'ScatterplotLayer',
             data=pd.DataFrame({'lat': [pred_lat], 'lon': [pred_long]}),
             get_position='[lon, lat]',
-            get_fill_color='[200, 30, 0, 160]',
+            get_fill_color='[255, 165, 0, 160]',  # Orange color
             get_radius=50000
         )
         r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "Predicted Location: {lat}, {lon}"})
