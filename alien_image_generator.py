@@ -6,36 +6,15 @@ import streamlit as st
 import random
 from utils import add_image_styles
 
-# comment this if in production
-# from dotenv import load_dotenv
-# import os
-
-# comment this if in production
-# load_dotenv()
-
-# comment this if in production
-# API_KEY = os.getenv('OPENAI_API_KEY')
-
 # uncomment this if in production
 API_KEY = st.secrets['OPENAI_API_KEY']
 
-
-def generate_alien_description(texture, color, eyes, limbs, features):
+def generate_alien_description(race, color, size, shape, eyes, limbs, features):
+    size_str = f"{size:.1f} feet"
+    description = f"A {race} alien with {color} skin, {size_str} tall, {shape} shaped, with {eyes} eyes and {limbs} limbs."
     if features:
-        descriptions = [
-            f"An alien with {color} {texture} skin, {eyes} eyes, and {limbs}. Additional features: {features}.",
-            f"An alien that is {color} in color, with {texture} skin, {eyes} eyes, and {limbs}. Additional features: {features}.",
-            f"An alien with {texture} skin, {color} in color, {eyes} eyes, and {limbs}. Additional features: {features}.",
-        ]
-    else:
-        descriptions = [
-            f"An alien with {color} {texture} skin, {eyes} eyes, and {limbs}.",
-            f"An alien that is {color} in color, with {texture} skin, {eyes} eyes, and {limbs}.",
-            f"An alien with {texture} skin, {color} in color, {eyes} eyes, and {limbs}.",
-        ]
-
-    return random.choice(descriptions)
-
+        description += f" Additional features: {features}."
+    return description
 
 def generate_alien_image(description):
     url = "https://api.openai.com/v1/images/generations"
@@ -65,12 +44,12 @@ def get_image_from_url(image_url):
     img = Image.open(BytesIO(response.content))
     return img
 
-def display_alien_image(race, color, size, shape, features):
+def display_alien_image(race, color, size, shape, eyes, limbs, features):
     # Apply the custom styles
     add_image_styles()
 
-    description = generate_alien_description(race, color, size, shape, features)
-    st.write(f"Image Description: {description}")  # Print the description above the image
+    description = generate_alien_description(race, color, size, shape, eyes, limbs, features)
+    st.markdown("<h4 style='text-align: center;'>👇 Is this the ALIEN you saw? 👇</h4>", unsafe_allow_html=True)
     image_url = generate_alien_image(description)
     if image_url:
         st.markdown(f"""

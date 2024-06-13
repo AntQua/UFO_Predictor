@@ -218,7 +218,6 @@ def predict_cluster_and_display_sightings(pred_lat, pred_long):
 # Alien sighting section
 def alien_sighting_section():
     if not st.session_state.get('show_alien_section', False):
-        #st.markdown("<h2 style='text-align: center;'>👽 Have you seen an alien? 👽</h2>", unsafe_allow_html=True)
         col1, col2 = st.columns([1, 1])
 
         with col1:
@@ -232,22 +231,31 @@ def alien_sighting_section():
                 st.rerun()
     else:
         st.markdown(
-            "<h2 style='text-align: center;'>👽 Describe the <span style='color: green; font-weight: bold;'>ALIEN</span> you saw 👽</h2>",
+            "<h2 style='text-align: center;'>👽 Describe the <span style='color: #A1DD70; font-weight: bold;'>ALIEN</span> you saw 👽</h2>",
             unsafe_allow_html=True
         )
 
         with st.form("alien_description_form"):
-            alien_texture = st.text_input("Enter the alien texture:", "")
-            alien_color = st.text_input("Enter the alien color:", "")
-            alien_eyes = st.text_input("Enter the alien eyes:", "")
-            alien_limbs = st.text_input("Enter the alien limbs:", "")
-            additional_features = st.text_area("Additional Features", "")
+            col1, col2 = st.columns([1, 1])
+
+            with col1:
+                alien_race = st.selectbox("Select the alien race:", ["Grays", "Reptilians", "Nordics", "Anunnaki", "Other"])
+                alien_color = st.selectbox("Select the alien color:", ["Green", "Gray", "Blue", "Red", "Other"])
+                alien_size = st.slider("Select the alien height (in feet):", min_value=2.0, max_value=15.0, step=0.1)
+                alien_shape = st.selectbox("Select the alien body shape:", ["Humanoid", "Insectoid", "Reptilian", "Other"])
+
+            with col2:
+                number_of_eyes = st.selectbox("Number of eyes:", ["1", "2", "3", "4", "More"])
+                number_of_limbs = st.selectbox("Number of limbs:", ["2", "4", "6", "More"])
+                additional_features = st.text_area("Additional features (e.g., wings, antennae, etc.)")
+
             submit_button = st.form_submit_button("Generate Alien Image")
 
         if submit_button:
-            with st.spinner("Predicting... Please wait."):
+            with st.spinner("Generating image... Please wait."):
                 alien_image_generator.display_alien_image(
-                     alien_texture, alien_color, alien_eyes, alien_limbs, additional_features
+                    alien_race, alien_color, alien_size, alien_shape,
+                    number_of_eyes, number_of_limbs, additional_features
                 )
                 st.session_state['show_alien_section'] = False
 
@@ -293,7 +301,7 @@ def run():
             formatted_time = time_input.strftime("%H:%M")
 
             st.markdown(
-                f"<h4 style='text-align: center;'>👽 Have you also seen an <span style='color: green; font-weight: bold;'>ALIEN</span> in {formatted_date} at {formatted_time}h? 👽</h4>",
+                f"<h4 style='text-align: center;'>👽 Have you also seen an <span style='color: #A1DD70; font-weight: bold;'>ALIEN</span> in {formatted_date} at {formatted_time}h? 👽</h4>",
                 unsafe_allow_html=True
         )
 

@@ -94,7 +94,7 @@ def display_ufo_image(predicted_shape):
     add_image_styles()
 
     description = generate_dynamic_prompt(predicted_shape)
-    st.write(f"Image Description: {description}")  # Print the description above the image
+    st.markdown("<h4 style='text-align: center;'>👇 Probably you will see this type of UFO 👇</h4>", unsafe_allow_html=True)
     image_url = generate_ufo_image(description)
     if image_url:
         st.markdown(f"""
