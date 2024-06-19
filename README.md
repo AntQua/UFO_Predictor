@@ -28,6 +28,10 @@ You can explore our UFO Predictor app here: [UFO Predictor App](https://etpredic
 
 Simply enter the required data, and the app will provide predictions and visualizations based on the input. The user interface is intuitive and designed for easy navigation.
 
+## Built with Streamlit
+
+Our application is built using **Streamlit**, a powerful framework for building and deploying data science applications with ease. The app is also deployed on Streamlit, ensuring a smooth and interactive user experience.
+
 
 ## PowerPoint Presentation
 For a detailed overview of the project, including data analysis, model development, and implementation, check our project PowerPoint presentation here: [UFO Predictor Presentation](https://docs.google.com/presentation/d/109X9OinYrtaUD-Knwp1ATN61AYhpqP6N/edit#slide=id.p1).
